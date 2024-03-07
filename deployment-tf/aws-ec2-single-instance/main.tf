@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "us-east-2" # Specify your preferred AWS region
+  region = var.aws-region # Specify your preferred AWS region
 }
 
 resource "random_string" "random" {
