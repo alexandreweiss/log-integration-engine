@@ -1,3 +1,5 @@
 *tfstate*
 origin_logstash.conf
 .DS_Store
+*logstash_output_splunk_hec_all*
+*avxlogs.conf

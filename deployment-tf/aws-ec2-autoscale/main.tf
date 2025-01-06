@@ -8,7 +8,7 @@ resource "random_string" "random" {
 }
 
 resource "aws_s3_bucket" "default" {
-  bucket = "avx-log-int-${lower(random_string.random.id)}"
+  bucket = "avxlog-${lower(random_string.random.id)}"
   tags   = var.tags
 }
 
@@ -29,7 +29,7 @@ resource "aws_s3_object" "base_pattern_config" {
 }
 
 resource "aws_s3_access_point" "default" {
-  name   = "avx-log-integration-config"
+  name   = "avxlog-${lower(random_string.random.id)}"
   bucket = aws_s3_bucket.default.id
   vpc_configuration {
     vpc_id = var.vpc_id
@@ -37,7 +37,7 @@ resource "aws_s3_access_point" "default" {
 }
 
 resource "aws_iam_policy" "s3_read_policy" {
-  name        = "avx-log-integration-s3-read-policy"
+  name        = "avxlog-${lower(random_string.random.id)}"
   description = "Policy to allow EC2 instances to read a specific S3 bucket"
 
   policy = jsonencode({
@@ -58,7 +58,7 @@ resource "aws_iam_policy" "s3_read_policy" {
 }
 
 resource "aws_iam_role" "ec2_s3_access_role" {
-  name = "avx-log-integration-ec2-s3-access-role"
+  name = "avxlog-${lower(random_string.random.id)}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -96,7 +96,7 @@ data "aws_ami" "amazon-linux-2" {
 
 
 resource "aws_iam_instance_profile" "ec2_s3_access_profile" {
-  name = "avx-log-integration-ec2-s3-access-profile"
+  name = "avxlog-${lower(random_string.random.id)}"
   role = aws_iam_role.ec2_s3_access_role.name
   tags = var.tags
 }
@@ -104,7 +104,7 @@ resource "aws_iam_instance_profile" "ec2_s3_access_profile" {
 
 resource "aws_security_group" "default" {
   count  = var.use_existing_copilot_security_group ? 0 : 1
-  name   = "avx-log-integration-copilot-sg"
+  name   = "avxlog-${lower(random_string.random.id)}"
   vpc_id = var.vpc_id
   ingress {
     from_port   = var.syslog_port
@@ -135,7 +135,7 @@ locals {
 }
 
 resource "aws_launch_template" "default" {
-  name          = "avx-log-integration-launch-template"
+  name          = "avxlog-${lower(random_string.random.id)}"
   image_id      = data.aws_ami.amazon-linux-2.image_id
   instance_type = var.logstash_instance_size
   key_name      = var.ssh_key_name
@@ -153,7 +153,7 @@ resource "aws_launch_template" "default" {
   }
 
   network_interfaces {
-    associate_public_ip_address = true
+    associate_public_ip_address = var.assign_instance_public_ip
     security_groups             = [aws_security_group.default[0].id]
   }
 
@@ -162,7 +162,7 @@ resource "aws_launch_template" "default" {
   tag_specifications {
     resource_type = "instance"
     tags = merge({
-      Name = "avx-log-int-engine"
+      Name = "avxlog-${lower(random_string.random.id)}"
     }, var.tags)
   }
 
@@ -177,7 +177,7 @@ resource "aws_autoscaling_group" "default" {
     id = aws_launch_template.default.id
     version = aws_launch_template.default.latest_version
   }
-  vpc_zone_identifier = var.subnet_ids
+  vpc_zone_identifier = var.instance_subnet_ids
   min_size            = var.autoscale_min_size
   max_size            = var.autoscale_max_size
 
@@ -190,7 +190,7 @@ resource "aws_autoscaling_group" "default" {
 
   tag {
     key                 = "Name"
-    value               = "avx-log-integration"
+    value               = "avxlog-${lower(random_string.random.id)}"
     propagate_at_launch = true
   }
 }
@@ -204,7 +204,7 @@ resource "aws_autoscaling_policy" "scale_up" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "high_cpu" {
-  alarm_name          = "avx-log-integration-high-cpu"
+  alarm_name          = "avxlog-${lower(random_string.random.id)}"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 2
   metric_name         = "CPUUtilization"
@@ -216,10 +216,10 @@ resource "aws_cloudwatch_metric_alarm" "high_cpu" {
 }
 
 resource "aws_lb" "default" {
-  name                       = "avx-log-integration-nlb"
+  name                       = "avxlog-${lower(random_string.random.id)}"
   internal                   = false
   load_balancer_type         = "network"
-  subnets                    = var.subnet_ids
+  subnets                    = var.lb_subnet_ids
   enable_deletion_protection = false
   tags                       = var.tags
 }
@@ -227,7 +227,7 @@ resource "aws_lb" "default" {
 # Configure NLB and listener
 
 resource "aws_lb_target_group" "default" {
-  name     = "avx-log-integration-nlb-tg"
+  name     = "avxlog-${lower(random_string.random.id)}"
   port     = var.syslog_port
   protocol = upper(var.syslog_protocol)
   vpc_id   = var.vpc_id

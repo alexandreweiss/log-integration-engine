@@ -17,9 +17,20 @@ variable "vpc_id" {
   description = "VPC ID"
 }
 
-variable "subnet_ids" {
+variable "instance_subnet_ids" {
     description = "Subnet IDs"
     type        = list(string)
+}
+
+variable "lb_subnet_ids" {
+    description = "Subnet IDs"
+    type        = list(string)
+}
+
+variable "assign_instance_public_ip" {
+  description = "Assign public IP to instances"
+  default     = false
+  
 }
 
 variable "use_existing_copilot_security_group" {
