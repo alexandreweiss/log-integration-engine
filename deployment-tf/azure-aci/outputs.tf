@@ -39,10 +39,6 @@ output "storage_account_name" {
   value       = azurerm_storage_account.logstash_storage.name
 }
 
-output "file_share_name" {
-  description = "Name of the file share for Logstash configuration"
-  value       = azurerm_storage_share.logstash_config.name
-}
 
 output "storage_account_primary_access_key" {
   description = "Primary access key for the storage account"

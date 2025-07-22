@@ -35,32 +35,32 @@ resource "azurerm_storage_account" "logstash_storage" {
   tags = var.tags
 }
 
-# File share for Logstash configuration
-resource "azurerm_storage_share" "logstash_config" {
-  name                 = var.file_share_name
+# File share for Logstash patterns
+resource "azurerm_storage_share" "patterns" {
+  name                 = "patterns"
   storage_account_name = azurerm_storage_account.logstash_storage.name
   quota                = var.file_share_quota_gb
 }
 
-# Upload Logstash configuration file to the file share
+# File share for Logstash pipeline
+resource "azurerm_storage_share" "pipeline" {
+  name                 = "pipeline"
+  storage_account_name = azurerm_storage_account.logstash_storage.name
+  quota                = var.file_share_quota_gb
+}
+
+# Upload Logstash configuration file to the pipeline share
 resource "azurerm_storage_share_file" "logstash_conf" {
   name             = "logstash.conf"
-  storage_share_id = azurerm_storage_share.logstash_config.id
-  source           = "${path.module}/../../logstash-configs/output_splunk_hec/logstash_output_splunk_hec.conf"
+  storage_share_id = azurerm_storage_share.pipeline.id
+  source           = "${path.module}/../../logstash-configs/output_azure_log_ingestion_api/logstash_output_azure_lia.conf"
 }
 
-# Upload patterns directory (if exists)
-resource "azurerm_storage_share_directory" "patterns_dir" {
-  name             = "patterns"
-  storage_share_id = azurerm_storage_share.logstash_config.id
-}
-
-# Upload pattern file
+# Upload pattern file to the patterns share
 resource "azurerm_storage_share_file" "avx_pattern" {
-  name             = "patterns/avx.conf"
-  storage_share_id = azurerm_storage_share.logstash_config.id
+  name             = "avx.conf"
+  storage_share_id = azurerm_storage_share.patterns.id
   source           = "${path.module}/../../logstash-configs/base_config/patterns/avx.conf"
-  depends_on       = [azurerm_storage_share_directory.patterns_dir]
 }
 
 # Container group with Logstash container
@@ -86,12 +86,21 @@ resource "azurerm_container_group" "logstash" {
     environment_variables = var.environment_variables
 
     volume {
-      name                 = "logstash-config"
+      name                 = "logstash-patterns"
+      mount_path          = "/usr/share/logstash/patterns"
+      read_only           = false
+      storage_account_name = azurerm_storage_account.logstash_storage.name
+      storage_account_key  = azurerm_storage_account.logstash_storage.primary_access_key
+      share_name          = azurerm_storage_share.patterns.name
+    }
+
+    volume {
+      name                 = "logstash-pipeline"
       mount_path          = "/usr/share/logstash/pipeline"
       read_only           = false
       storage_account_name = azurerm_storage_account.logstash_storage.name
       storage_account_key  = azurerm_storage_account.logstash_storage.primary_access_key
-      share_name          = azurerm_storage_share.logstash_config.name
+      share_name          = azurerm_storage_share.pipeline.name
     }
   }
 
