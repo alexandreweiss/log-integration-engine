@@ -24,9 +24,15 @@ resource "azurerm_resource_group" "aci_rg" {
   location = var.location
 }
 
+# Generate random suffix for unique naming
+resource "random_integer" "suffix" {
+  min = 10000
+  max = 99999
+}
+
 # Storage account for Logstash configuration files
 resource "azurerm_storage_account" "logstash_storage" {
-  name                     = var.storage_account_name
+  name                     = "${var.storage_account_name}${random_integer.suffix.result}"
   resource_group_name      = azurerm_resource_group.aci_rg.name
   location                 = azurerm_resource_group.aci_rg.location
   account_tier             = "Standard"
@@ -69,7 +75,7 @@ resource "azurerm_container_group" "logstash" {
   location            = azurerm_resource_group.aci_rg.location
   resource_group_name = azurerm_resource_group.aci_rg.name
   ip_address_type     = "Public"
-  dns_name_label      = var.dns_name_label
+  dns_name_label      = "${var.dns_name_label}-${random_integer.suffix.result}"
   os_type             = "Linux"
 
   container {
@@ -83,7 +89,10 @@ resource "azurerm_container_group" "logstash" {
       protocol = var.container_protocol
     }
 
-    environment_variables = var.environment_variables
+    environment_variables = merge(var.environment_variables, var.logstash_config_variables, {
+      "azure_dcr_microseg_id"  = azurerm_monitor_data_collection_rule.aviatrix_microseg.immutable_id
+      "azure_dcr_suricata_id"  = azurerm_monitor_data_collection_rule.aviatrix_suricata.immutable_id
+    })
 
     volume {
       name                 = "logstash-patterns"
@@ -112,4 +121,5 @@ resource "azurerm_container_group" "logstash" {
   }
 
   tags = var.tags
+  depends_on = [ azurerm_storage_share_file.avx_pattern, azurerm_storage_share_file.logstash_conf ]
 }

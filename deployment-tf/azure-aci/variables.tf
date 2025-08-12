@@ -57,9 +57,9 @@ variable "container_protocol" {
 }
 
 variable "dns_name_label" {
-  description = "DNS name label for the container group"
+  description = "Base DNS name label for the container group"
   type        = string
-  default     = "logstash-aci"
+  default     = "aviatrix-logstash-sentinel"
 }
 
 variable "storage_account_name" {
@@ -117,5 +117,28 @@ variable "tags" {
     Environment = "production"
     Project     = "log-integration-engine"
     Service     = "logstash"
+  }
+}
+
+variable "logstash_config_variables" {
+  description = "Configuration variables for Logstash output plugins"
+  type        = map(string)
+  default = {
+    # Azure Log Ingestion API Configuration
+    "azure_dcr_mitm_id" = ""
+    "azure_dcr_fqdn_id" = ""
+    "azure_dcr_cmd_id" = ""
+    "azure_stream_suricata" = "Custom-AviatrixSuricata_CL"
+    "azure_stream_mitm" = "Custom-AviatrixMITM_CL"
+    "azure_stream_microseg" = "Custom-AviatrixMicroseg_CL"
+    "azure_stream_fqdn" = "Custom-AviatrixFQDN_CL"
+    "azure_stream_cmd" = "Custom-AviatrixCMD_CL"
+
+    # Microsoft Sentinel Plugin Configuration
+    "client_app_id" = "your-client-app-id"
+    "client_app_secret" = "your-client-app-secret"
+    "tenant_id" = "your-tenant-id"
+    "data_collection_endpoint" = "https://your-data-collection-endpoint"
+
   }
 }
