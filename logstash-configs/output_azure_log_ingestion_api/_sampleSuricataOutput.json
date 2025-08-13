@@ -1,0 +1,141 @@
+[
+    {
+        "alert": {
+            "action": "allowed",
+            "category": "Potentially Bad Traffic",
+            "gid": 1,
+            "metadata": {
+                "created_at": [
+                    "2014_09_26"
+                ],
+                "signature_severity": [
+                    "Major"
+                ],
+                "updated_at": [
+                    "2019_07_26"
+                ]
+            },
+            "rev": 3,
+            "severity": 2,
+            "signature": "ET ATTACK_RESPONSE Output of id command from HTTP server",
+            "signature_id": 2019284
+        },
+        "app_proto": "http",
+        "dest_ip": "10.10.4.132",
+        "dest_port": 42906,
+        "event_type": "alert",
+        "files": [
+            {
+                "filename": "/uid/index.html",
+                "gaps": false,
+                "sid": [],
+                "size": 39,
+                "state": "CLOSED",
+                "stored": false,
+                "tx_id": 0
+            }
+        ],
+        "flow": {
+            "bytes_toclient": 875,
+            "bytes_toserver": 495,
+            "pkts_toclient": 5,
+            "pkts_toserver": 6,
+            "start": "2025-07-24T08:32:47.619756+0000"
+        },
+        "flow_id": 1293588041266412,
+        "http": {
+            "hostname": "testmynids.org",
+            "http_content_type": "text/html",
+            "http_method": "GET",
+            "http_user_agent": "curl/8.5.0",
+            "length": 39,
+            "protocol": "HTTP/1.1",
+            "status": 200,
+            "url": "/uid/index.html"
+        },
+        "in_iface": "ids0",
+        "ls_timestamp": "2025-07-24T08:32:47.000Z",
+        "ls_version": "1",
+        "proto": "TCP",
+        "src_ip": "13.227.219.7",
+        "src_port": 80,
+        "tags": [
+            "_grokparsefailure",
+            "suricata"
+        ],
+        "TimeGenerated": "2025-07-24T08:33:22.301571488Z",
+        "timestamp": "2025-07-24T08:32:47.636566+0000",
+        "unix_time": 1753345967
+    },
+    {
+        "alert": {
+            "action": "allowed",
+            "category": "Potentially Bad Traffic",
+            "gid": 1,
+            "metadata": {
+                "confidence": [
+                    "Medium"
+                ],
+                "created_at": [
+                    "2010_09_23"
+                ],
+                "signature_severity": [
+                    "Informational"
+                ],
+                "updated_at": [
+                    "2019_07_26"
+                ]
+            },
+            "rev": 7,
+            "severity": 2,
+            "signature": "GPL ATTACK_RESPONSE id check returned root",
+            "signature_id": 2100498
+        },
+        "app_proto": "http",
+        "dest_ip": "10.10.4.132",
+        "dest_port": 42906,
+        "event_type": "alert",
+        "files": [
+            {
+                "filename": "/uid/index.html",
+                "gaps": false,
+                "sid": [],
+                "size": 39,
+                "state": "CLOSED",
+                "stored": false,
+                "tx_id": 0
+            }
+        ],
+        "flow": {
+            "bytes_toclient": 875,
+            "bytes_toserver": 495,
+            "pkts_toclient": 5,
+            "pkts_toserver": 6,
+            "start": "2025-07-24T08:32:47.619756+0000"
+        },
+        "flow_id": 1293588041266412,
+        "http": {
+            "hostname": "testmynids.org",
+            "http_content_type": "text/html",
+            "http_method": "GET",
+            "http_user_agent": "curl/8.5.0",
+            "length": 39,
+            "protocol": "HTTP/1.1",
+            "status": 200,
+            "url": "/uid/index.html"
+        },
+        "in_iface": "ids0",
+        "ls_timestamp": "2025-07-24T08:32:47.000Z",
+        "ls_version": "1",
+        "proto": "TCP",
+        "src_ip": "13.227.219.7",
+        "src_port": 80,
+        "tags": [
+            "_grokparsefailure",
+            "suricata"
+        ],
+        "TimeGenerated": "2025-07-24T08:33:22.301630258Z",
+        "timestamp": "2025-07-24T08:32:47.636566+0000",
+        "unix_time": 1753345967
+    }
+]
