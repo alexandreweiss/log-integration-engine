@@ -35,14 +35,7 @@ logstash_config_variables = {
 
 ### Setup Steps
 
-#### 1. Create Data Collection Endpoint (DCE)
-```bash
-az monitor data-collection-endpoint create \
-  --name "your-dce-name" \
-  --resource-group "<resource-group>" \
-  --location "your-location" \
-  --network-acls-public-network-access "Enabled"
-```
+
 
 #### 2. Create Custom Tables in Log Analytics Workspace
 Create custom tables for each log type using Azure CLI:
