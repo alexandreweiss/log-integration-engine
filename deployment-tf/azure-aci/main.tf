@@ -77,6 +77,7 @@ resource "azurerm_container_group" "logstash" {
   ip_address_type     = "Public"
   dns_name_label      = "${var.dns_name_label}-${random_integer.suffix.result}"
   os_type             = "Linux"
+  count = var.container_count
 
   container {
     name   = var.container_name

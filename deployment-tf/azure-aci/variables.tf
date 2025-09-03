@@ -28,6 +28,12 @@ variable "container_image" {
   default     = "docker.elastic.co/logstash/logstash:8.16.2"
 }
 
+variable "container_count" {
+  description = "Number of container to deploy inside the container group"
+  type = number
+  default = 1
+}
+
 variable "cpu_cores" {
   description = "Number of CPU cores for the container"
   type        = number

@@ -26,14 +26,10 @@ log_analytics_resource_group_name   = "your-log-analytics-rg"
 # Logstash Configuration Variables
 logstash_config_variables = {
   # Azure Log Ingestion API Configuration
-  "azure_dcr_mitm_id"      = "dcr-12345678-1234-1234-1234-123456789def"
-  "azure_dcr_fqdn_id"      = "dcr-12345678-1234-1234-1234-123456789jkl"
-  "azure_dcr_cmd_id"       = "dcr-12345678-1234-1234-1234-123456789mno"
+  "azure_dcr_suricata_id"  = "dcr-12345678-1234-1234-1234-123456789pqr"
+  "azure_dcr_microseg_id"  = "dcr-12345678-1234-1234-1234-123456789stu"
   "azure_stream_suricata"  = "Custom-AviatrixSuricata_CL"
-  "azure_stream_mitm"      = "Custom-AviatrixMITM_CL"
   "azure_stream_microseg"  = "Custom-AviatrixMicroseg_CL"
-  "azure_stream_fqdn"      = "Custom-AviatrixFQDN_CL"
-  "azure_stream_cmd"       = "Custom-AviatrixCMD_CL"
   
   # Microsoft Sentinel Plugin Configuration
   "client_app_id" = "12345678-1234-1234-1234-123456789abc"
@@ -53,7 +49,7 @@ environment_variables = {
 
 # Tags
 tags = {
-  Environment = "dev"
+  Usage = "Aviatrix"
   Project     = "log-integration-engine"
   Service     = "logstash"
 }

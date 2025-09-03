@@ -3,11 +3,18 @@ data "azurerm_monitor_data_collection_endpoint" "dce" {
     resource_group_name = var.log_analytics_resource_group_name
 }
 
+resource "azurerm_monitor_data_collection_endpoint" "dce" {
+  name                = "avx-we-log"
+  location            = azurerm_resource_group.aci_rg.location
+  resource_group_name = var.log_analytics_resource_group_name
+
+}
+
 resource "azurerm_monitor_data_collection_rule" "aviatrix_microseg" {
   name                = "aviatrix-microseg-dcr"
   location            = azurerm_resource_group.aci_rg.location
   resource_group_name = var.log_analytics_resource_group_name
-  data_collection_endpoint_id = data.azurerm_monitor_data_collection_endpoint.dce.id
+  data_collection_endpoint_id = azurerm_monitor_data_collection_endpoint.dce.id
 
   data_flow {
     streams      = ["Custom-AviatrixMicroseg_CL"]
@@ -88,7 +95,7 @@ resource "azurerm_monitor_data_collection_rule" "aviatrix_suricata" {
   name                = "aviatrix-suricata-dcr"
   location            = azurerm_resource_group.aci_rg.location
   resource_group_name = var.log_analytics_resource_group_name
-  data_collection_endpoint_id = data.azurerm_monitor_data_collection_endpoint.dce.id
+  data_collection_endpoint_id = azurerm_monitor_data_collection_endpoint.dce.id
 
   data_flow {
     streams      = ["Custom-AviatrixSuricata_CL"]
