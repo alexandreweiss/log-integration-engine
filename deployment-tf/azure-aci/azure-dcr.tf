@@ -1,10 +1,5 @@
-data "azurerm_monitor_data_collection_endpoint" "dce" {
-    name                = "avx-we-log"
-    resource_group_name = var.log_analytics_resource_group_name
-}
-
 resource "azurerm_monitor_data_collection_endpoint" "dce" {
-  name                = "avx-we-log"
+  name                = "avx-drc-${random_integer.suffix.result}"
   location            = azurerm_resource_group.aci_rg.location
   resource_group_name = var.log_analytics_resource_group_name
 
@@ -18,7 +13,7 @@ resource "azurerm_monitor_data_collection_rule" "aviatrix_microseg" {
 
   data_flow {
     streams      = ["Custom-AviatrixMicroseg_CL"]
-    destinations = ["la-destination"]
+    destinations = ["loganalytics-destination"]
     output_stream = "Custom-AviatrixMicroseg_CL"
     transform_kql = "source"
   }
@@ -26,7 +21,7 @@ resource "azurerm_monitor_data_collection_rule" "aviatrix_microseg" {
   destinations {
     log_analytics {
       workspace_resource_id = data.azurerm_log_analytics_workspace.workspace.id
-      name                  = "la-destination"
+      name                  = "loganalytics-destination"
     }
   }
 
@@ -99,7 +94,7 @@ resource "azurerm_monitor_data_collection_rule" "aviatrix_suricata" {
 
   data_flow {
     streams      = ["Custom-AviatrixSuricata_CL"]
-    destinations = ["la-destination"]
+    destinations = ["loganalytics-destination"]
     output_stream = "Custom-AviatrixSuricata_CL"
     transform_kql = "source"
   }
@@ -107,7 +102,7 @@ resource "azurerm_monitor_data_collection_rule" "aviatrix_suricata" {
   destinations {
     log_analytics {
       workspace_resource_id = data.azurerm_log_analytics_workspace.workspace.id
-      name                  = "la-destination"
+      name                  = "loganalytics-destination"
     }
   }
 
@@ -203,6 +198,53 @@ resource "azurerm_monitor_data_collection_rule" "aviatrix_suricata" {
     }
   }
 }
+
+# Azure AD Application and Service Principal for Logstash to authenticate to Azure Monitor DCR
+data "azuread_client_config" "current" {}
+data "azurerm_client_config" "current" {}
+
+# 1. Application (Service Principal) creation
+resource "azuread_application" "logstash_app" {
+  display_name = "aweiss-logstash-sentinel-${random_integer.suffix.result}"
+  owners    = [data.azuread_client_config.current.object_id]
+}
+# 2. Create the password for the created APP
+resource "azuread_application_password" "logstash_app_password" {
+  application_id = azuread_application.logstash_app.id
+  end_date = timeadd(timestamp(), "8760h")
+
+  lifecycle {
+    ignore_changes = [end_date]
+  }
+}
+
+# 3. Create SP associated with the APP
+resource "azuread_service_principal" "logstash_sp" {
+  client_id = azuread_application.logstash_app.client_id
+  owners    = [data.azuread_client_config.current.object_id]
+}
+
+# 4. Create the password for the created SP
+resource "azuread_service_principal_password" "logstash_sp_password" {
+  service_principal_id = azuread_service_principal.logstash_sp.id
+}
+
+# Role assignment for the Log Analytics Data Collection Rules
+
+resource "azurerm_role_assignment" "aviatrix_suricata_dcr_assignment" {
+  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${var.log_analytics_resource_group_name}/providers/Microsoft.Insights/dataCollectionRules/aviatrix-suricata-dcr"
+  role_definition_name = "Monitoring Metrics Publisher"
+  principal_id         = azuread_service_principal.logstash_sp.object_id
+  depends_on = [ azurerm_monitor_data_collection_rule.aviatrix_suricata ]
+}
+
+resource "azurerm_role_assignment" "aviatrix_microseg_dcr_assignment" {
+  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${var.log_analytics_resource_group_name}/providers/Microsoft.Insights/dataCollectionRules/aviatrix-microseg-dcr"
+  role_definition_name = "Monitoring Metrics Publisher"
+  principal_id         = azuread_service_principal.logstash_sp.object_id
+  depends_on = [ azurerm_monitor_data_collection_rule.aviatrix_microseg ]
+}
+
 
 ## Work in progress - Sample Log Analytics Table for Aviatrix Microseg. Doesn't support TF resource yet.
 # resource "azapi_resource" "aviatrix_microseg_table" {

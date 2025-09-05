@@ -6,46 +6,18 @@ resource_group_name  = "your-logstash-rg"
 location            = "West Europe"
 
 # Container Configuration
-container_group_name = "your-logstash-container-group"
 container_name      = "aviatrix-logstash-sentinel"
 container_image     = "your-registry.azurecr.io/aviatrix-logstash-sentinel"
 cpu_cores          = 1
 memory_gb          = 1.5
 container_port     = 5000
-dns_name_label     = "your-logstash-instance"
 
 # Storage Configuration
 storage_account_name   = "yourstorageaccount"
-file_share_name       = "logstash-config"
-file_share_quota_gb   = 5
 
 # Log Analytics Configuration
 log_analytics_workspace_name        = "your-log-analytics-workspace"
 log_analytics_resource_group_name   = "your-log-analytics-rg"
-
-# Logstash Configuration Variables
-logstash_config_variables = {
-  # Azure Log Ingestion API Configuration
-  "azure_dcr_suricata_id"  = "dcr-12345678-1234-1234-1234-123456789pqr"
-  "azure_dcr_microseg_id"  = "dcr-12345678-1234-1234-1234-123456789stu"
-  "azure_stream_suricata"  = "Custom-AviatrixSuricata_CL"
-  "azure_stream_microseg"  = "Custom-AviatrixMicroseg_CL"
-  
-  # Microsoft Sentinel Plugin Configuration
-  "client_app_id" = "12345678-1234-1234-1234-123456789abc"
-  "client_app_secret" = "your-service-principal-secret-here"
-  "tenant_id" = "12345678-1234-1234-1234-123456789abc"
-  "data_collection_endpoint" = "https://your-dce-name.region-1.ingest.monitor.azure.com"
-}
-
-# Environment Variables for Logstash
-environment_variables = {
-  "LS_JAVA_OPTS"           = "-Xmx1g -Xms1g"
-  "LOG_LEVEL"              = "info"
-  "XPACK_MONITORING_ENABLED" = "false"
-  "PIPELINE_WORKERS"       = "1"
-  "CONFIG_RELOAD_AUTOMATIC" = "true"
-}
 
 # Tags
 tags = {

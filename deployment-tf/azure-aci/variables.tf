@@ -10,12 +10,6 @@ variable "location" {
   default     = "France Central"
 }
 
-variable "container_group_name" {
-  description = "Name of the container group"
-  type        = string
-  default     = "logstash-container-group"
-}
-
 variable "container_name" {
   description = "Name of the container"
   type        = string
@@ -26,12 +20,6 @@ variable "container_image" {
   description = "Docker image for the container"
   type        = string
   default     = "docker.elastic.co/logstash/logstash:8.16.2"
-}
-
-variable "container_count" {
-  description = "Number of container to deploy inside the container group"
-  type = number
-  default = 1
 }
 
 variable "cpu_cores" {
@@ -62,12 +50,6 @@ variable "container_protocol" {
   }
 }
 
-variable "dns_name_label" {
-  description = "Base DNS name label for the container group"
-  type        = string
-  default     = "aviatrix-logstash-sentinel"
-}
-
 variable "storage_account_name" {
   description = "Name of the storage account for Logstash configuration files"
   type        = string
@@ -77,12 +59,6 @@ variable "storage_account_name" {
     condition     = can(regex("^[a-z0-9]{3,24}$", var.storage_account_name))
     error_message = "Storage account name must be between 3 and 24 characters long and contain only lowercase letters and numbers."
   }
-}
-
-variable "file_share_name" {
-  description = "Name of the file share for Logstash configuration"
-  type        = string
-  default     = "logstash-config"
 }
 
 variable "file_share_quota_gb" {
@@ -112,7 +88,13 @@ variable "environment_variables" {
   description = "Environment variables for the container"
   type        = map(string)
   default = {
-    "LS_JAVA_OPTS" = "-Xmx1g -Xms1g"
+    "LS_JAVA_OPTS"           = "-Xmx1g -Xms1g"
+    "LOG_LEVEL"              = "info"
+    "XPACK_MONITORING_ENABLED" = "false"
+    "PIPELINE_WORKERS"       = "1"
+    "CONFIG_RELOAD_AUTOMATIC" = "true"
+    "azure_stream_suricata"  = "Custom-AviatrixSuricata_CL"
+    "azure_stream_microseg"  = "Custom-AviatrixMicroseg_CL"
   }
 }
 
@@ -144,7 +126,5 @@ variable "logstash_config_variables" {
     "client_app_id" = "your-client-app-id"
     "client_app_secret" = "your-client-app-secret"
     "tenant_id" = "your-tenant-id"
-    "data_collection_endpoint" = "https://your-data-collection-endpoint"
-
   }
 }

@@ -1,6 +1,12 @@
 # Azure Container Instances (ACI) Logstash Deployment
 
-This Terraform configuration deploys a Logstash container on Azure Container Instances (ACI) with the following specifications:
+This Terraform configuration deploys a Logstash container on Azure Container Instances (ACI) with the below specifications.
+It uses the Microsoft Log Ingestion API along with the Microsoft Sentinel Logstash output plugin.
+> For detailed guidance on connecting Logstash to Microsoft Sentinel using Data Collection Rules, see the [Microsoft Learn article](https://learn.microsoft.com/en-us/azure/sentinel/connect-logstash-data-connection-rules).
+
+## Architecture Diagram
+
+![Log Engine API Architecture](images/log-engine-api.png)
 
 ## Configuration Details
 
@@ -9,7 +15,6 @@ This Terraform configuration deploys a Logstash container on Azure Container Ins
   - This is a custom image built with the Azure Log Ingestion API plugin. You can built your own following [README](logstash-container-build/README.md) into the logstash-container-builder folder. Update your terraform.tfvars file accordingly.
 - **Resources**: 1 vCPU, 1.5GB memory
   - You can adapt to the expected load on your container.
-  - You can also add more containers to the container group if needed updating the "container_count" variable.
 - **Network**: Public IP with TCP port 5000 exposed.
   - You can use UDP for higher performance by updating "container_protocol" variable.
 - **OS Type**: Linux
@@ -21,25 +26,24 @@ This Terraform configuration deploys a Logstash container on Azure Container Ins
 1. Azure CLI installed and authenticated
 2. Terraform >= 1.0 installed
 3. Existing Log Analytics workspace and resource group information
-4. Azure Service Principal (aka. Application) to be used by logstash plugin to push data to Log Analytics
-4. Custom container containing logstash and sentinel plugin (actual source here is supplied as best effort, you should build/use your source)
+4. Custom container containing Logstash and the Sentinel plugin (actual source here is supplied as **best effort**) You should build/use your own source. See the [README](./logstash-container-build/README.md) for instructions.)
 5. Log Analytics Custom Log tables for Microseg and Suricata logs. Info below
     - Corresponding Azure Monitor Data Collection Rules and Data Collection Endpoint are created by the azure-drc.tf TF configuration file.
+
+To be able to create the Azure Entra ID Service Principal, you must have the following rights the **Application Administrator** or **Cloud Application Administrator** role in Azure Entra ID. These roles allow you to create and manage application that is required and used by the logstash plugin to push logs to Log Analytics.
 
 ## Deployment Steps
 
 This is a first release that mixes Terraform code along with some Azure CLI commands as not everything was available in Terraform.
 
-### Azure part
-
-#### EntraID Application creation
+### EntraID Application creation (aka. Service Principal or SPN)
 
 ```bash
 az ad sp create-for-rbac --name "<your-application-name>"
 ```
-Keep application id and application secret for use in terraform.tfvars and for role assignment at the end of that readme.
+**Be sure to keep** application id and application secret for use in terraform.tfvars and for SPN IAM role assignment at the end of that readme.
 
-#### Custom log table creation example (not available through Terraform azurerm provider yet)
+### Custom log table creation example (not available through Terraform azurerm provider yet)
 
 ```bash
 az monitor log-analytics workspace table create \
@@ -58,78 +62,83 @@ az monitor log-analytics workspace table create \
    --columns TimeGenerated=datetime Computer=string alert=dynamic app_proto=string dest_ip=string dest_port=int event_type=string files=dynamic flow=dynamic flow_id=long http=dynamic in_iface=string ls_timestamp=string ls_version=string proto=string src_ip=string src_port=int tags=dynamic timestamp=string tx_id=int
 ```
 
-### Terraform part
+| Log Type | Stream Name | Custom Table | Description |
+|----------|-------------|--------------|-------------|
+| Suricata | `Custom-AviatrixSuricata_CL` | `AviatrixSuricata_CL` | Intrusion Detection System logs |
+| Microseg | `Custom-AviatrixMicroseg_CL` | `AviatrixMicroseg_CL` | Layer 4 microsegmentation logs |
 
-From within the deployment-tf\azure-aci folder, run the below:
+Below is a screenshot showing the custom tables created in Log Analytics:
 
-1. **Initialize Terraform**:
+![Custom Tables Example](images/loganalytics-custom-tables.png)
+
+### Terraform deployment part
+
+Duplicate the `terraform.tfvars.sample` to `terraform.tfvars` and provide values for each variable. If you rename the file with a different name, you will have to use the -var-file switch with the new name otherwise, do not use the switch : Terraform will pickup you variable file automatically.
+
+Once deployed, come back here to continue with SPN IAM role assignment
+
+1. **Go to folder containing TF config**:
+
+   ```bash
+   cd .\deployment-tf\azure-aci\
+   ```
+
+2. **Initialize Terraform**:
    ```bash
    terraform init
    ```
 
-2. **Review the plan**:
+3. **Review the plan**:
    ```bash
-   terraform plan -var-file="terraform.tfvars"
+   terraform plan [-var-file="terraform.tfvars"]
    ```
 
-3. **Apply the configuration**:
+4. **Apply the configuration**:
    ```bash
-   terraform apply -var-file="terraform.tfvars"
+   terraform apply [-var-file="terraform.tfvars"]
    ```
 
-4. **Get outputs**:
+5. **Get outputs**:
    ```bash
    terraform output
    ```
 
-## Configuration Files
+### SPN IAM Role assignement on Data Collection Rules to allow plugin to push data to Microsoft Log Ingestion API via DCR rule.
 
-- `main.tf` - Main Terraform configuration
-- `variables.tf` - Variable definitions
-- `outputs.tf` - Output definitions
-- `terraform.tfvars.sample` - Sample variable file (customize as needed)
-- `azure-dcr.tf` - Azure Data Collection Rules and endpoints configuration
+This is needed in order to allow the Service Principal (EntraID application) previously created and used by the Logstash plugin to send data to the two Data Collection Rules. They will in turn, send logs to the Log Analytics custom tables.
+Please be sure to update the different parameters contained into < >
 
-## Customization
-
-You can customize the deployment by creating your own `terraform.tfvars.sample` file naming it `terraform.tfvars` for automated pickup.
-
-- Change resource names
-- Modify container specifications
-- Add additional environment variables
-- Update tags
-- ...
-
-## Accessing Logstash
-
-After deployment, Logstash will be accessible at:
-- **FQDN**: The output `container_group_fqdn` will provide the full domain name. That is what needs to be used to configure an additional  Copilot remote logging profil in addition to the one for Copilot. (Steps given below.)
-
-You can also attach to container to read ouput easily:
+#### DCR IAM update for Suricata log ingestion
 ```bash
-# Attach to the running Logstash container in ACI
-az container attach \
-   --resource-group <your-resource-group> \
-   --name <your-container-group-name>
+az role assignment create --assignee <your-application-id> --role "Monitoring Metrics Publisher" --scope /subscriptions/<your-subscription-id>/resourceGroups/<your-log-analytics-workspace-resource-group-name>/providers/Microsoft.Insights/dataCollectionRules/aviatrix-suricata-dcr
 ```
-Replace `<your-resource-group>` and `<your-container-group-name>` with your actual resource group and container group names.
 
-## Logstash Configuration
+#### DCR IAM update for MicroSeg log ingestion
+```bash
+az role assignment create --assignee <your-application-id> --role "Monitoring Metrics Publisher" --scope /subscriptions/<your-subscription-id>/resourceGroups/<your-log-analytics-workspace-resource-group-name>/providers/Microsoft.Insights/dataCollectionRules/aviatrix-microseg-dcr
+```
 
-The deployment automatically uploads the following configuration files to the Azure File Share:
+## Aviatrix Log export configuration
 
-- **Main Configuration**: `logstash.conf` (from `../../logstash-configs/output_azure_log_ingestion_api/logstash_output_azure_lia.conf`)
-- **Patterns**: `patterns/avx.conf` (from `../../logstash-configs/base_config/patterns/avx.conf`)
+Configure Aviatrix Copilot to export logs to the newly deployed Azure Container Instance containing Logstash. Use the outputs of the previous terraform deployment.
 
-These files are mounted to the container at `/usr/share/logstash/pipeline` and `/usr/share/logstash/patterns` respectively.
+### Aviatrix Copilot Log Export Configuration
 
-If you decide to change any configuration, container is configured for auto reload of configuration using the variable "CONFIG_RELOAD_AUTOMATIC" = "true"
+To export logs from Aviatrix Copilot to the Azure Container Instance running Logstash, follow these steps:
 
-### Environment Variables Required
+1. **Access Copilot UI**: Log in to your Aviatrix Copilot dashboard.
+2. **Navigate to Log Export Settings**: Go to *Settings* > *Configuration* > *Logging services* > *Edit Profile* under Remote Syslog.
+3. **Configure Syslog Export**:
+   - **Profile**: Select a profile from 1 to 8 (not removing Copilot's profile)
+   - **Profile Name**: Give it a name
+   - **Server**: Use the `container_group_fqdn` output from Terraform.
+   - **Port**: Set to `5000` (or your configured port).
+   - **Protocol**: Select `TCP` (or `UDP` if configured).
+4. **Save**: Save the configuration.
 
-The Logstash configuration expects the following configuration variables for Azure Log Ingestion API integration:
+[See the Aviatrix Copilot documentation for more detailed instructions on configuring Syslog profiles.](https://docs.aviatrix.com/documentation/latest/platform-administration/copilot/aviatrix-logging-copilot.html#syslog-profiles)
 
-You can set these in the `logstash_config_variables` in your `terraform.tfvars` using example from `terraform.tfvars.sample`.
+Logs from Copilot will now be forwarded to Logstash in the Azure Container Instance for processing. Upon messages recognition, logs will be sent to Azure Log Analytics via the Azure Log Ingestion API.
 
 ## Clean Up
 
@@ -149,38 +158,29 @@ Below are sample screenshots of Log Analytics queries and dashboards using data 
 
 ![Suricata Log Table](images/loganalytics-suricata-example.png)
 
-## Aviatrix Log export configuration
+## Troubleshooting
 
-Configure Aviatrix Copilot to export logs to the newly deployed Azure Container Instance containing Logstash.
-### Aviatrix Copilot Log Export Configuration
+### Accessing Logstash
 
-To export logs from Aviatrix Copilot to the Azure Container Instance running Logstash, follow these steps:
+After deployment, Logstash will be accessible at:
+- **FQDN**: The output `container_group_fqdn` will provide the full domain name. That is what needs to be used to configure an additional  Copilot remote logging profil in addition to the one for Copilot. (Steps given below.)
 
-1. **Access Copilot UI**: Log in to your Aviatrix Copilot dashboard.
-2. **Navigate to Log Export Settings**: Go to *Settings* > *Configuration* > *Logging services* > *Edit Profile* under Remote Syslog.
-3. **Configure Syslog Export**:
-   - **Profile**: Select a profile from 1 to 8 (not removing Copilot's profile)
-   - **Profile Name**: Give it a name
-   - **Server**: Use the `container_group_fqdn` output from Terraform.
-   - **Port**: Set to `5000` (or your configured port).
-   - **Protocol**: Select `TCP` (or `UDP` if configured).
-4. **Save**: Save the configuration.
-
-[See the Aviatrix Copilot documentation for more detailed instructions on configuring Syslog profiles.](https://docs.aviatrix.com/documentation/latest/platform-administration/copilot/aviatrix-logging-copilot.html#syslog-profiles)
-
-Logs from Copilot will now be forwarded to Logstash in the Azure Container Instance for processing. Upon messages recognition, logs will be sent to Azure Log Analytics via the Azure Log Ingestion API.
-
-### Role assignement to Application on Data Collection Rules to allow plugin to push data to Microsoft Log Ingestion API via DCR rule.
-
-This is needed in order to allow the Service Principal (EntraID application) previously created and used by the Logstash plugin to send data to the two Data Collection Rules. They will in turn, send logs to the Log Analytics custom tables.
-Please be sure to update the different parameters contained into < >
-
-#### DCR IAM update for Suricata log ingestion
+You can also attach to container to read ouput easily:
 ```bash
-az role assignment create --assignee <your-application-id> --role "Monitoring Metrics Publisher" --scope /subscriptions/<your-subscription-id>/resourceGroups/<your-log-analytics-workspace-resource-group-name>/providers/Microsoft.Insights/dataCollectionRules/aviatrix-suricata-dcr
+# Attach to the running Logstash container in ACI
+az container attach \
+   --resource-group <your-resource-group> \
+   --name <your-container-group-name>
 ```
+Replace `<your-resource-group>` and `<your-container-group-name>` with your actual resource group and container group names.
 
-#### DCR IAM update for MicroSeg log ingestion
-```bash
-az role assignment create --assignee <your-application-id> --role "Monitoring Metrics Publisher" --scope /subscriptions/<your-subscription-id>/resourceGroups/<your-log-analytics-workspace-resource-group-name>/providers/Microsoft.Insights/dataCollectionRules/aviatrix-microseg-dcr
-```
+### Logstash Configuration
+
+The deployment automatically uploads the following configuration files to the Azure File Share:
+
+- **Main Configuration**: `pipeline/logstash.conf` (from `../../logstash-configs/output_azure_log_ingestion_api/logstash_output_azure_lia.conf`)
+- **Patterns**: `patterns/avx.conf` (from `../../logstash-configs/base_config/patterns/avx.conf`)
+
+These files are mounted to the container at `/usr/share/logstash/pipeline` and `/usr/share/logstash/patterns` respectively.
+
+If you decide to change any configuration, container is configured for auto reload of configuration using the variable "CONFIG_RELOAD_AUTOMATIC" = "true"
