@@ -1,17 +1,3 @@
-terraform {
-  required_version = ">= 1.0"
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.0"
-    }
-  }
-}
-
-provider "azurerm" {
-  features {}
-}
-
 # Data source for existing Log Analytics workspace
 data "azurerm_log_analytics_workspace" "workspace" {
   name                = var.log_analytics_workspace_name
@@ -45,14 +31,14 @@ resource "azurerm_storage_account" "logstash_storage" {
 resource "azurerm_storage_share" "patterns" {
   name                 = "patterns"
   storage_account_name = azurerm_storage_account.logstash_storage.name
-  quota                = var.file_share_quota_gb
+  quota                = 1
 }
 
 # File share for Logstash pipeline
 resource "azurerm_storage_share" "pipeline" {
   name                 = "pipeline"
   storage_account_name = azurerm_storage_account.logstash_storage.name
-  quota                = var.file_share_quota_gb
+  quota                = 1
 }
 
 # Upload Logstash configuration file to the pipeline share
@@ -60,6 +46,7 @@ resource "azurerm_storage_share_file" "logstash_conf" {
   name             = "logstash.conf"
   storage_share_id = azurerm_storage_share.pipeline.id
   source           = "${path.module}/../../logstash-configs/output_azure_log_ingestion_api/logstash_output_azure_lia.conf"
+  depends_on = [ azurerm_monitor_data_collection_endpoint.dce ]
 }
 
 # Upload pattern file to the patterns share
@@ -71,13 +58,12 @@ resource "azurerm_storage_share_file" "avx_pattern" {
 
 # Container group with Logstash container
 resource "azurerm_container_group" "logstash" {
-  name                = var.container_group_name
+  name                = "${var.container_name}-group"
   location            = azurerm_resource_group.aci_rg.location
   resource_group_name = azurerm_resource_group.aci_rg.name
   ip_address_type     = "Public"
-  dns_name_label      = "${var.dns_name_label}-${random_integer.suffix.result}"
+  dns_name_label      = "${var.container_name}-${random_integer.suffix.result}"
   os_type             = "Linux"
-  count = var.container_count
 
   container {
     name   = var.container_name
@@ -90,9 +76,13 @@ resource "azurerm_container_group" "logstash" {
       protocol = var.container_protocol
     }
 
-    environment_variables = merge(var.environment_variables, var.logstash_config_variables, {
+    environment_variables = merge(var.environment_variables, {
       "azure_dcr_microseg_id"  = azurerm_monitor_data_collection_rule.aviatrix_microseg.immutable_id
       "azure_dcr_suricata_id"  = azurerm_monitor_data_collection_rule.aviatrix_suricata.immutable_id
+      "data_collection_endpoint" = azurerm_monitor_data_collection_endpoint.dce.logs_ingestion_endpoint
+      "client_app_id" = azuread_application.logstash_app.client_id
+      "client_app_secret" = azuread_application_password.logstash_app_password.value
+      "tenant_id" = data.azuread_client_config.current.tenant_id
     })
 
     volume {

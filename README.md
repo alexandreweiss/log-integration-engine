@@ -31,9 +31,9 @@ You can adapt Logstash configuration to output from AWS to Splunk or Log Analyti
 Currently, the following engine deployment architectures are published in the `deployment-tf` folder:
 | Deployment Architecture | Description | README |
 |--|--|--|
-|aws-ec2-autoscale  | An highly-available autoscaling set of EC2 instances running Logstash behind an AWS NLB with a public Elastic IP. An S3 bucket contains the Logstash configuration and roles are created to allow the VMs to pull the logstash configuration. When the logstash configuration changes, and the terraform is re-applied, the instances will automatically refresh with the new configuration via a rolling upgrade. | [README](./deployment-tf/aws-ec2-autoscale/) |
-|aws-ec2-single-instance| A single EC2 instance with Logstash and a public Elastic IP. An S3 bucket contains the Logstash configuration and roles are created to allow the VM to pull the Logstash configuration. When the Logstash configuration changes, and the Terraform is re-applied, the instances will automatically refresh with the new configuration via a rolling upgrade.| [README](./deployment-tf/aws-ec2-autoscale/) |
-|azure-aci | A single Azure Container Instance (ACI) with Logstash and a public IP. An Azure Storage Account Fileshare contains the Logstash configuration. ACI mounts the fileshare at deployment time to read the Logstash configuration. Any update to those files trigger a Logstash reload. When the Logstash configuration changes, and the Terraform is re-applied, the instances will automatically refresh with the new configuration via a rolling upgrade.| [README](./deployment-tf/azure-aci/) |
+|aws-ec2-autoscale  | An highly-available autoscaling set of EC2 instances running Logstash behind an AWS NLB with a public Elastic IP. An S3 bucket contains the Logstash configuration and roles are created to allow the VMs to pull the logstash configuration. When the logstash configuration changes, and the terraform is re-applied, the instances will automatically refresh with the new configuration via a rolling upgrade. | [Folder](./deployment-tf/aws-ec2-autoscale) |
+|aws-ec2-single-instance| A single EC2 instance with Logstash and a public Elastic IP. An S3 bucket contains the Logstash configuration and roles are created to allow the VM to pull the Logstash configuration. When the Logstash configuration changes, and the Terraform is re-applied, the instances will automatically refresh with the new configuration via a rolling upgrade.| [Folder](./deployment-tf/aws-ec2-single-instance/) |
+|azure-aci | A single Azure Container Instance (ACI) with Logstash and a public IP. An Azure Storage Account Fileshare contains the Logstash configuration. ACI mounts the fileshare at deployment time to read the Logstash configuration. Any update to those files trigger a Logstash reload. When the Logstash configuration changes, and the Terraform is re-applied, the instances will automatically refresh with the new configuration via a rolling upgrade.| [README](./deployment-tf/azure-aci/README.md) |
 
 
 ## Observability Destinations
@@ -41,8 +41,8 @@ Currently, the following destination observability outputs are published:
 
 | Destination | Description | README |
 |--|--|--|
-| output_splunk_hec | Outputs JSON formatted logs to the Splunk HTTP Event Collector interface | [README](./logstash-configs/output_splunk_hec/) |
-| output_azure_log_ingestion_api | Outputs logs to Azure Log Analytics via Logstash using Azure Log Ingestion API Logstash plugin (preview) | [README](./deployment-tf/azure-aci/) |
+| output_splunk_hec | Outputs JSON formatted logs to the Splunk HTTP Event Collector interface | [Folder](./logstash-configs/output_splunk_hec/) |
+| output_azure_log_ingestion_api | Outputs logs to Azure Log Analytics via Logstash using Azure Log Ingestion API Logstash plugin (preview) | [Folder](./logstash-configs/output_azure_log_ingestion_api/) |
 
   
 If modifying the Logstash configurations, it is recommended to modify only the "output" section as the inputs will be continuously updated to maintain compatibility with Aviatrix logs. 

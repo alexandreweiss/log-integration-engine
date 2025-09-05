@@ -1,5 +1,7 @@
 # Building and Publishing Logstash Container to Azure Container Registry
 
+Azure Container Registry is used as an example here but you can use container registry of your choice.
+
 ## 0. Set Variables
 
 Set your variables for consistent naming:
