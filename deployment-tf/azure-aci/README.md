@@ -27,21 +27,14 @@ It uses the Microsoft Log Ingestion API along with the Microsoft Sentinel Logsta
 2. Terraform >= 1.0 installed
 3. Existing Log Analytics workspace and resource group information
 4. Custom container containing Logstash and the Sentinel plugin (actual source here is supplied as **best effort**) You should build/use your own source. See the [README](./logstash-container-build/README.md) for instructions.)
-5. Log Analytics Custom Log tables for Microseg and Suricata logs. Info below
-    - Corresponding Azure Monitor Data Collection Rules and Data Collection Endpoint are created by the azure-drc.tf TF configuration file.
-
-To be able to create the Azure Entra ID Service Principal, you must have the following rights the **Application Administrator** or **Cloud Application Administrator** role in Azure Entra ID. These roles allow you to create and manage application that is required and used by the logstash plugin to push logs to Log Analytics.
+5. Log Analytics Custom Log tables for Microseg and Suricata logs. Use the two command lines provided after to create tables.
+6. EntraID Service Principal : you can decide to use a pre-created Service Principal (default) or let the terraform deployment create one for you.
+   - By default, "use_existing_spn" is set to true so you have to provide values of an existing Service Principal ID (client_app_id), secret (client_app_secret) and tenant ID (tenant_id) in the terraform.tfvars file,
+   - For the terraform deployment to create the Service Principal automatically, override the "use_existing_spn" variable with value "false". **You must have the "Application Administrator" or "Cloud Application Administrator" role in Azure Entra ID. These roles allow you to create and manage application that is required and used by the logstash plugin to push logs to Log Analytics.**
 
 ## Deployment Steps
 
 This is a first release that mixes Terraform code along with some Azure CLI commands as not everything was available in Terraform.
-
-### EntraID Application creation (aka. Service Principal or SPN)
-
-```bash
-az ad sp create-for-rbac --name "<your-application-name>"
-```
-**Be sure to keep** application id and application secret for use in terraform.tfvars and for SPN IAM role assignment at the end of that readme.
 
 ### Custom log table creation example (not available through Terraform azurerm provider yet)
 
@@ -103,21 +96,6 @@ Once deployed, come back here to continue with SPN IAM role assignment
    terraform output
    ```
 
-### SPN IAM Role assignement on Data Collection Rules to allow plugin to push data to Microsoft Log Ingestion API via DCR rule.
-
-This is needed in order to allow the Service Principal (EntraID application) previously created and used by the Logstash plugin to send data to the two Data Collection Rules. They will in turn, send logs to the Log Analytics custom tables.
-Please be sure to update the different parameters contained into < >
-
-#### DCR IAM update for Suricata log ingestion
-```bash
-az role assignment create --assignee <your-application-id> --role "Monitoring Metrics Publisher" --scope /subscriptions/<your-subscription-id>/resourceGroups/<your-log-analytics-workspace-resource-group-name>/providers/Microsoft.Insights/dataCollectionRules/aviatrix-suricata-dcr
-```
-
-#### DCR IAM update for MicroSeg log ingestion
-```bash
-az role assignment create --assignee <your-application-id> --role "Monitoring Metrics Publisher" --scope /subscriptions/<your-subscription-id>/resourceGroups/<your-log-analytics-workspace-resource-group-name>/providers/Microsoft.Insights/dataCollectionRules/aviatrix-microseg-dcr
-```
-
 ## Aviatrix Log export configuration
 
 Configure Aviatrix Copilot to export logs to the newly deployed Azure Container Instance containing Logstash. Use the outputs of the previous terraform deployment.
@@ -146,6 +124,9 @@ To destroy the resources:
 ```bash
 terraform destroy
 ```
+
+You also have to delete the two custom tables that were created manually using Azure CLI.
+
 ## Log Analytics output examples
 
 Below are sample screenshots of Log Analytics queries and dashboards using data ingested from Logstash:
