@@ -19,6 +19,12 @@ storage_account_name   = "yourstorageaccount"
 log_analytics_workspace_name        = "your-log-analytics-workspace"
 log_analytics_resource_group_name   = "your-log-analytics-rg"
 
+# If you use your own EntraID Service Principal, uncomment the below and insert appropriate value
+# client_app_id                  = "00000000-0000-0000-0000-000000000000"
+# client_app_secret                  = "fake-client-secret"
+# tenant_id                      = "00000000-0000-0000-0000-000000000000"
+# use_existing_spn                   = false
+
 # Tags
 tags = {
   Usage = "Aviatrix"
