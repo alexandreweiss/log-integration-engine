@@ -128,3 +128,28 @@ variable "logstash_config_variables" {
     "tenant_id" = "your-tenant-id"
   }
 }
+
+variable "use_existing_spn" {
+  description = "Whether to use an existing service principal (true) or create a new one (false) for the plugin to send logs to Log Analytics via DCR rules"
+  type        = bool
+  default     = true
+}
+
+variable "client_app_id" {
+  description = "Client Application ID for authentication"
+  type        = string
+  default     = "dummy"
+}
+
+variable "client_app_secret" {
+  description = "Client Application Secret for authentication"
+  type        = string
+  default     = "dummy"
+  sensitive   = true
+}
+
+variable "tenant_id" {
+  description = "Tenant ID for authentication"
+  type        = string
+  default     = "dummy"
+}
