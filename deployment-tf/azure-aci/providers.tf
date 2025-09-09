@@ -9,8 +9,15 @@ terraform {
 }
 
 provider "azurerm" {
+    features {}
+    alias = "china"
+  environment = "china"
+}
+
+provider "azurerm" {
   features {}
 }
 
 provider "azuread" {
+  
 }
