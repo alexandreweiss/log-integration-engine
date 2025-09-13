@@ -155,7 +155,7 @@ variable "tenant_id" {
 }
 
 variable "azure_cloud" {
-  description = "Azure cloud environment (e.g., 'AzureCloud', 'AzureUSGovernment', 'AzureChinaCloud')"
+  description = "Azure cloud environment (e.g., 'AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment')"
   type        = string
-  default     = "AzureCloud"
+  default     = "AzureChinaCloud"
 }

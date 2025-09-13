@@ -81,13 +81,21 @@ az acr create --resource-group $RESOURCE_GROUP \
     --sku Standard
 ```
 
-## 3. Log in to the Container Registry
+## 3. Enable anonymous container pulling.
+
+We could also create a managed identity assigned to the Azure Container Instance so that it has an IAM role that allows container to be pulled for the Azure Container Registry. As we have no sensitive data, we go for anonymus pulling.
+
+```sh
+az acr update --name $ACR_NAME --anonymous-pull-enabled true
+```
+
+## 4. Log in to the Container Registry
 
 ```sh
 az acr login --name $ACR_NAME
 ```
 
-## 4. Build the Docker Image
+## 5. Build the Docker Image
 
 ```sh
 az acr build --registry $ACR_NAME \
@@ -102,13 +110,13 @@ docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMA
 docker push ${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG}
 ```
 
-## 5. Verify the Image in ACR
+## 6. Verify the Image in ACR
 
 ```sh
 az acr repository list --name $ACR_NAME --output table
 ```
 
-## 6. Update Terraform Configuration
+## 7. Update Terraform Configuration
 
 Update your `terraform.tfvars` file with the correct container image reference:
 
