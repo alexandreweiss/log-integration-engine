@@ -22,15 +22,27 @@ It uses the Microsoft Log Ingestion API along with the Microsoft Sentinel Logsta
 - **Logging**: Provide your own Lag Analytcis workspace's name and resource group using log_analytics_workspace_name and log_analytics_resource_group_name variables.
 
 ## Prerequisites
+1. Azure CLI installed  
+2. Azure CLI authenticated
 
-1. Azure CLI installed and authenticated
-2. Terraform >= 1.0 installed
-3. Existing Log Analytics workspace and resource group information
-4. Custom container containing Logstash and the Sentinel plugin (actual source here is supplied as **best effort**) You should build/use your own source. See the [README](./logstash-container-build/README.md) for instructions.)
-5. Log Analytics Custom Log tables for Microseg and Suricata logs. Use the two command lines provided after to create tables.
-6. EntraID Service Principal : you can decide to use a pre-created Service Principal (default) or let the terraform deployment create one for you.
-   - By default, "use_existing_spn" is set to true so you have to provide values of an existing Service Principal ID (client_app_id), secret (client_app_secret) and tenant ID (tenant_id) in the terraform.tfvars file,
-   - For the terraform deployment to create the Service Principal automatically, override the "use_existing_spn" variable with value "false". **You must have the "Application Administrator" or "Cloud Application Administrator" role in Azure Entra ID. These roles allow you to create and manage application that is required and used by the logstash plugin to push logs to Log Analytics.**
+   - ```az cloud set --name AzureCloud``` to point az cli to public cloud
+   - ```az cloud set --name AzureChinaCloud``` to point az cli to China cloud
+3. Terraform >= 1.0 installed  
+4. Existing Log Analytics workspace and resource group information  
+5. Custom container containing Logstash and the Sentinel plugin (actual source here is supplied as **best effort**). You should build/use your own source. See the [README](./logstash-container-build/README.md) for instructions.  
+6. Log Analytics Custom Log tables for Microseg and Suricata logs. Use the two command lines provided below to create tables.  
+7. EntraID Service Principal: you can decide to use a pre-created Service Principal (default) or let the Terraform deployment create one for you.  
+   - By default, `use_existing_spn` is set to `true` so you have to provide values of an existing Service Principal ID (`client_app_id`), secret (`client_app_secret`), and tenant ID (`tenant_id`) in the `terraform.tfvars` file.  
+   - For the Terraform deployment to create the Service Principal automatically, override the `use_existing_spn` variable with value `false`. **You must have the "Application Administrator" or "Cloud Application Administrator" role in Azure Entra ID. These roles allow you to create and manage applications required and used by the Logstash plugin to push logs to Log Analytics.**
+
+## Azure public or Azure China deployment
+
+You can deploy that log engine into a region part of Azure Public cloud or inside one of the Azure China regions by running terraform from the appropriate folder.
+
+| Cloud | Folder |
+|----------|-------------|
+| Public | `deploy-public` |
+| China | `deploy-china` |
 
 ## Deployment Steps
 
@@ -73,7 +85,7 @@ Once deployed, come back here to continue with SPN IAM role assignment
 1. **Go to folder containing TF config**:
 
    ```bash
-   cd .\deployment-tf\azure-aci\
+   cd .\deployment-tf\azure-aci\deploy-public,china
    ```
 
 2. **Initialize Terraform**:

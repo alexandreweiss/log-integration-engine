@@ -23,7 +23,7 @@ resource "azurerm_storage_account" "logstash_storage" {
   location                 = azurerm_resource_group.aci_rg.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
-  
+
   tags = var.tags
 }
 
@@ -45,15 +45,15 @@ resource "azurerm_storage_share" "pipeline" {
 resource "azurerm_storage_share_file" "logstash_conf" {
   name             = "logstash.conf"
   storage_share_id = azurerm_storage_share.pipeline.id
-  source           = "${path.module}/../../logstash-configs/output_azure_log_ingestion_api/logstash_output_azure_lia.conf"
-  depends_on = [ azurerm_monitor_data_collection_endpoint.dce ]
+  source           = "${path.module}/../../../logstash-configs/output_azure_log_ingestion_api/logstash_output_azure_lia.conf"
+  depends_on       = [azurerm_monitor_data_collection_endpoint.dce]
 }
 
 # Upload pattern file to the patterns share
 resource "azurerm_storage_share_file" "avx_pattern" {
   name             = "avx.conf"
   storage_share_id = azurerm_storage_share.patterns.id
-  source           = "${path.module}/../../logstash-configs/base_config/patterns/avx.conf"
+  source           = "${path.module}/../../../logstash-configs/base_config/patterns/avx.conf"
 }
 
 # Container group with Logstash container
@@ -83,24 +83,25 @@ resource "azurerm_container_group" "logstash" {
       "client_app_id"            = var.use_existing_spn ? var.client_app_id : azuread_application.logstash_app[0].client_id
       "client_app_secret"        = var.use_existing_spn ? var.client_app_secret : azuread_application_password.logstash_app_password[0].value
       "tenant_id"                = var.use_existing_spn ? var.tenant_id : data.azuread_client_config.current[0].tenant_id
+      "azure_cloud"              = var.azure_cloud
     })
 
     volume {
       name                 = "logstash-patterns"
-      mount_path          = "/usr/share/logstash/patterns"
-      read_only           = false
+      mount_path           = "/usr/share/logstash/patterns"
+      read_only            = false
       storage_account_name = azurerm_storage_account.logstash_storage.name
       storage_account_key  = azurerm_storage_account.logstash_storage.primary_access_key
-      share_name          = azurerm_storage_share.patterns.name
+      share_name           = azurerm_storage_share.patterns.name
     }
 
     volume {
       name                 = "logstash-pipeline"
-      mount_path          = "/usr/share/logstash/pipeline"
-      read_only           = false
+      mount_path           = "/usr/share/logstash/pipeline"
+      read_only            = false
       storage_account_name = azurerm_storage_account.logstash_storage.name
       storage_account_key  = azurerm_storage_account.logstash_storage.primary_access_key
-      share_name          = azurerm_storage_share.pipeline.name
+      share_name           = azurerm_storage_share.pipeline.name
     }
   }
 
@@ -111,6 +112,6 @@ resource "azurerm_container_group" "logstash" {
     }
   }
 
-  tags = var.tags
-  depends_on = [ azurerm_storage_share_file.avx_pattern, azurerm_storage_share_file.logstash_conf ]
+  tags       = var.tags
+  depends_on = [azurerm_storage_share_file.avx_pattern, azurerm_storage_share_file.logstash_conf]
 }

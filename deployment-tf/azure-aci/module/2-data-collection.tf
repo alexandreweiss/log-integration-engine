@@ -2,17 +2,17 @@
 
 ## Data Collection Endpoint used as entry point for Data Collection Rules
 resource "azurerm_monitor_data_collection_endpoint" "dce" {
-  name                = "avx-drc-${random_integer.suffix.result}"
-  location            = azurerm_resource_group.aci_rg.location
-  resource_group_name = var.log_analytics_resource_group_name
+  name                 = "avx-drc-${random_integer.suffix.result}"
+  location             = azurerm_resource_group.aci_rg.location
+  resource_group_name  = var.log_analytics_resource_group_name
 
 }
 
 ## Data Collection Rules for Aviatrix Firewall logs
 resource "azurerm_monitor_data_collection_rule" "aviatrix_microseg" {
-  name                = "aviatrix-microseg-dcr"
-  location            = azurerm_resource_group.aci_rg.location
-  resource_group_name = var.log_analytics_resource_group_name
+  name                 = "aviatrix-microseg-dcr"
+  location             = azurerm_resource_group.aci_rg.location
+  resource_group_name  = var.log_analytics_resource_group_name
   data_collection_endpoint_id = azurerm_monitor_data_collection_endpoint.dce.id
 
   data_flow {
@@ -92,9 +92,9 @@ resource "azurerm_monitor_data_collection_rule" "aviatrix_microseg" {
 
 ## Data Collection Rules for Aviatrix IDS logs
 resource "azurerm_monitor_data_collection_rule" "aviatrix_suricata" {
-  name                = "aviatrix-suricata-dcr"
-  location            = azurerm_resource_group.aci_rg.location
-  resource_group_name = var.log_analytics_resource_group_name
+  name                 = "aviatrix-suricata-dcr"
+  location             = azurerm_resource_group.aci_rg.location
+  resource_group_name  = var.log_analytics_resource_group_name
   data_collection_endpoint_id = azurerm_monitor_data_collection_endpoint.dce.id
 
   data_flow {

@@ -54,7 +54,7 @@ variable "storage_account_name" {
   description = "Name of the storage account for Logstash configuration files"
   type        = string
   default     = "logstashstorage"
-  
+
   validation {
     condition     = can(regex("^[a-z0-9]{3,24}$", var.storage_account_name))
     error_message = "Storage account name must be between 3 and 24 characters long and contain only lowercase letters and numbers."
@@ -65,7 +65,7 @@ variable "file_share_quota_gb" {
   description = "Quota for the file share in GB"
   type        = number
   default     = 5
-  
+
   validation {
     condition     = var.file_share_quota_gb >= 1 && var.file_share_quota_gb <= 102400
     error_message = "File share quota must be between 1 and 102400 GB."
@@ -88,13 +88,13 @@ variable "environment_variables" {
   description = "Environment variables for the container"
   type        = map(string)
   default = {
-    "LS_JAVA_OPTS"           = "-Xmx1g -Xms1g"
-    "LOG_LEVEL"              = "info"
+    "LS_JAVA_OPTS"             = "-Xmx1g -Xms1g"
+    "LOG_LEVEL"                = "info"
     "XPACK_MONITORING_ENABLED" = "false"
-    "PIPELINE_WORKERS"       = "1"
-    "CONFIG_RELOAD_AUTOMATIC" = "true"
-    "azure_stream_suricata"  = "Custom-AviatrixSuricata_CL"
-    "azure_stream_microseg"  = "Custom-AviatrixMicroseg_CL"
+    "PIPELINE_WORKERS"         = "1"
+    "CONFIG_RELOAD_AUTOMATIC"  = "true"
+    "azure_stream_suricata"    = "Custom-AviatrixSuricata_CL"
+    "azure_stream_microseg"    = "Custom-AviatrixMicroseg_CL"
   }
 }
 
@@ -113,19 +113,19 @@ variable "logstash_config_variables" {
   type        = map(string)
   default = {
     # Azure Log Ingestion API Configuration
-    "azure_dcr_mitm_id" = ""
-    "azure_dcr_fqdn_id" = ""
-    "azure_dcr_cmd_id" = ""
+    "azure_dcr_mitm_id"     = ""
+    "azure_dcr_fqdn_id"     = ""
+    "azure_dcr_cmd_id"      = ""
     "azure_stream_suricata" = "Custom-AviatrixSuricata_CL"
-    "azure_stream_mitm" = "Custom-AviatrixMITM_CL"
+    "azure_stream_mitm"     = "Custom-AviatrixMITM_CL"
     "azure_stream_microseg" = "Custom-AviatrixMicroseg_CL"
-    "azure_stream_fqdn" = "Custom-AviatrixFQDN_CL"
-    "azure_stream_cmd" = "Custom-AviatrixCMD_CL"
+    "azure_stream_fqdn"     = "Custom-AviatrixFQDN_CL"
+    "azure_stream_cmd"      = "Custom-AviatrixCMD_CL"
 
     # Microsoft Sentinel Plugin Configuration
-    "client_app_id" = "your-client-app-id"
+    "client_app_id"     = "your-client-app-id"
     "client_app_secret" = "your-client-app-secret"
-    "tenant_id" = "your-tenant-id"
+    "tenant_id"         = "your-tenant-id"
   }
 }
 
@@ -152,4 +152,10 @@ variable "tenant_id" {
   description = "Tenant ID for authentication"
   type        = string
   default     = "dummy"
+}
+
+variable "azure_cloud" {
+  description = "Azure cloud environment (e.g., 'AzureCloud', 'AzureChinaCloud', 'AzureUSGovernment')"
+  type        = string
+  default     = "AzureChinaCloud"
 }
